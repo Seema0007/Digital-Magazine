@@ -33,40 +33,40 @@ export const magazines: Magazine[] = [
     title: 'June 2023',
     date: 'June 2023',
     category: 'science',
-    coverImage: 'src/public/magazines/Science/s1.png',
-    pdfUrl: 'src/public/magazines/Science/s1.pdf'
+    coverImage: '/magazines/Science/s1.png',
+    pdfUrl: '/magazines/Science/s1.pdf'
   },
   {
     id: 'May 2023',
     title: 'May 2023',
     date: 'May 2023',
     category: 'science',
-    coverImage: 'src/public/magazines/Science/s2.png',
-    pdfUrl: 'src/public/magazines/Science/s2.pdf'
+    coverImage: '/magazines/Science/s2.png',
+    pdfUrl: '/magazines/Science/s2.pdf'
   },
   {
     id: 'April 2023',
     title: 'April 2023',
     date: 'April 2023',
     category: 'science',
-    coverImage: 'src/public/magazines/Science/s3.png',
-    pdfUrl: 'src/public/magazines/Science/s3.pdf'
+    coverImage: '/magazines/Science/s3.png',
+    pdfUrl: '/magazines/Science/s3.pdf'
   },
   {
     id: 'kannada-2024-02',
     title: 'June 2023',
     date: 'June 2023',
     category: 'kannada',
-    coverImage: 'src/public/magazines/Kannada/k1.png',
-    pdfUrl: 'src/public/magazines/Kannada/k1.pdf'
+    coverImage: '/magazines/Kannada/k1.png',
+    pdfUrl: '/magazines/Kannada/k1.pdf'
   },
   {
     id: 'kannada-2024-03',
     title: 'July 2023',
     date: 'July 2023',
     category: 'kannada',
-    coverImage: 'src/public/magazines/Kannada/k2.png',
-    pdfUrl: 'src/public/magazines/Kannada/k2.pdf'
+    coverImage: '/magazines/Kannada/k2.png',
+    pdfUrl: '/magazines/Kannada/k2.pdf'
   },
  
   {
@@ -74,8 +74,8 @@ export const magazines: Magazine[] = [
     title: 'June Newsletter',
     date: 'June 2023',
     category: 'newsletter',
-    coverImage: 'src/public/magazines/Newsletter/n1.png',
-    pdfUrl: 'src/public/magazines/Newsletter/n1.pdf'
+    coverImage: '/magazines/Newsletter/n1.png',
+    pdfUrl: '/magazines/Newsletter/n1.pdf'
   },
 
 
@@ -84,8 +84,8 @@ export const magazines: Magazine[] = [
     title: 'May Newsletter',
     date: 'May 2023',
     category: 'newsletter',
-    coverImage: 'src/public/magazines/Newsletter/n2.png',
-    pdfUrl: 'src/public/magazines/Newsletter/n2.pdf'
+    coverImage: '/magazines/Newsletter/n2.png',
+    pdfUrl: '/magazines/Newsletter/n2.pdf'
   },
 
   {
@@ -93,8 +93,8 @@ export const magazines: Magazine[] = [
     title: 'April Newsletter',
     date: 'April 2023',
     category: 'newsletter',
-    coverImage: 'src/public/magazines/Newsletter/n3.png',
-    pdfUrl: 'src/public/magazines/Newsletter/n3.pdf'
+    coverImage: '/magazines/Newsletter/n3.png',
+    pdfUrl: '/magazines/Newsletter/n3.pdf'
   },
  
  
