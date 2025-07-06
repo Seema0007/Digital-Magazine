@@ -29,18 +29,22 @@ function MagazineList({ magazines, selectedMagazine, onSelect }: MagazineListPro
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col bg-gray-50">
+    <div className="h-full max-h-screen flex flex-col bg-gray-50 overflow-hidden">
       {/* Header */}
-      <div className="flex-shrink-0 bg-white border-b border-gray-200 p-4">
+      <div className="flex-shrink-0 bg-white border-b border-gray-200 p-3 sm:p-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-800">Your Library</h2>
-            <p className="text-sm text-gray-600">{magazines.length} magazines available</p>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 truncate">
+              Your Library
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-600 mt-0.5">
+              {magazines.length} magazine{magazines.length !== 1 ? 's' : ''} available
+            </p>
           </div>
           
           {/* View Toggle - Hidden on mobile */}
           {!isMobile && (
-            <div className="bg-gray-100 rounded-lg p-1 flex">
+            <div className="bg-gray-100 rounded-lg p-1 flex ml-4 flex-shrink-0">
               <button
                 onClick={() => setViewMode('grid')}
                 className={`p-2 rounded transition-colors ${
@@ -65,27 +69,27 @@ function MagazineList({ magazines, selectedMagazine, onSelect }: MagazineListPro
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-4">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ minHeight: 0 }}>
+        <div className="p-3 sm:p-4">
           {magazines.length === 0 ? (
             <div className="text-center py-12">
-              <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No magazines available.</p>
+              <BookOpen className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 text-sm sm:text-base">No magazines available.</p>
             </div>
           ) : (
             <>
               {/* Grid View */}
               {viewMode === 'grid' && (
-                <div className={`grid ${getGridColumns()} gap-4`}>
+                <div className={`grid ${getGridColumns()} gap-3 sm:gap-4`}>
                   {magazines.map((magazine) => (
                     <button
                       key={magazine.id}
                       onClick={() => onSelect(magazine)}
-                      className={`text-left bg-white rounded-lg p-3 transition-all duration-200 hover:shadow-md ${
+                      className={`text-left bg-white rounded-lg p-2 sm:p-3 transition-all duration-200 hover:shadow-md ${
                         selectedMagazine.id === magazine.id ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'
                       }`}
                     >
-                      <div className="w-full aspect-[3/4] mb-3 overflow-hidden rounded-lg relative group">
+                      <div className="w-full aspect-[3/4] mb-2 sm:mb-3 overflow-hidden rounded-lg relative group">
                         <img
                           src={magazine.coverImage}
                           alt={magazine.title}
@@ -93,15 +97,15 @@ function MagazineList({ magazines, selectedMagazine, onSelect }: MagazineListPro
                           loading="lazy"
                         />
                         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center">
-                          <BookOpen className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
                       </div>
-                      <h3 className="font-semibold text-gray-800 mb-1 text-sm sm:text-base line-clamp-2">
+                      <h3 className="font-semibold text-gray-800 mb-1 text-xs sm:text-sm md:text-base line-clamp-2 leading-tight">
                         {magazine.title}
                       </h3>
-                      <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-1">
-                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                        <span className="truncate">{magazine.date}</span>
+                      <p className="text-xs text-gray-600 flex items-center gap-1">
+                        <Calendar className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate text-xs">{magazine.date}</span>
                       </p>
                     </button>
                   ))}
