@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Loader2, Bookmark, Layout, List, X, Eye } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Loader2, Bookmark, Layout, List, X, Eye, Menu } from 'lucide-react';
 import { Magazine } from '../types';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
@@ -32,6 +32,8 @@ function MagazineViewer({ magazine }: MagazineViewerProps) {
   const [thumbnailPages, setThumbnailPages] = useState<number[]>([]);
   const [viewMode, setViewMode] = useState<'single' | 'double'>('single');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   // Save bookmarks to localStorage
   useEffect(() => {
@@ -66,9 +68,22 @@ function MagazineViewer({ magazine }: MagazineViewerProps) {
   // Handle window resize
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      const width = window.innerWidth;
+      setIsMobile(width < 768);
+      setIsTablet(width >= 768 && width < 1024);
+      
+      // Auto-adjust scale based on screen size
+      if (width < 768) {
+        setScale(0.6);
+        setViewMode('single'); // Force single view on mobile
+      } else if (width < 1024) {
+        setScale(0.8);
+      } else {
+        setScale(1);
+      }
     };
 
+    handleResize(); // Initial call
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -103,19 +118,30 @@ function MagazineViewer({ magazine }: MagazineViewerProps) {
 
   const isCurrentPageBookmarked = bookmarks.some(b => b.page === currentPage);
 
+  // Calculate responsive sidebar width
+  const sidebarWidth = isMobile ? 'w-full' : isTablet ? 'w-64' : 'w-80';
+
   return (
     <div className="h-[calc(100vh-4rem)] bg-gray-100 overflow-hidden relative flex">
+      {/* Mobile Menu Overlay */}
+      {isMobile && showMobileMenu && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50" onClick={() => setShowMobileMenu(false)} />
+      )}
+
       {/* Sidebar for Thumbnails and Bookmarks */}
       {(showThumbnails || showBookmarks) && (
-        <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
-          <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-            <h3 className="font-semibold">
+        <div className={`${sidebarWidth} bg-white border-r border-gray-200 flex flex-col ${
+          isMobile ? 'fixed inset-y-0 left-0 z-40 transform transition-transform duration-300' : ''
+        } ${isMobile && !showMobileMenu ? '-translate-x-full' : 'translate-x-0'}`}>
+          <div className="p-3 sm:p-4 border-b border-gray-200 flex justify-between items-center">
+            <h3 className="font-semibold text-sm sm:text-base">
               {showThumbnails ? 'Thumbnails' : 'Bookmarks'}
             </h3>
             <button
               onClick={() => {
                 setShowThumbnails(false);
                 setShowBookmarks(false);
+                setShowMobileMenu(false);
               }}
               className="p-1 hover:bg-gray-100 rounded-full"
             >
@@ -123,24 +149,27 @@ function MagazineViewer({ magazine }: MagazineViewerProps) {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-4">
             {showThumbnails && (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {thumbnailPages.map(pageNum => (
                   <div
                     key={pageNum}
                     className={`cursor-pointer transition-all ${
                       currentPage === pageNum ? 'ring-2 ring-blue-500' : ''
                     }`}
-                    onClick={() => setCurrentPage(pageNum)}
+                    onClick={() => {
+                      setCurrentPage(pageNum);
+                      if (isMobile) setShowMobileMenu(false);
+                    }}
                   >
                     <Document file={magazine.pdfUrl}>
                       <Page
                         pageNumber={pageNum}
-                        scale={0.3}
+                        scale={isMobile ? 0.2 : 0.3}
                         className="shadow-sm"
                         loading={
-                          <div className="w-full h-32 bg-gray-100 animate-pulse" />
+                          <div className="w-full h-20 sm:h-32 bg-gray-100 animate-pulse" />
                         }
                       />
                     </Document>
@@ -160,13 +189,16 @@ function MagazineViewer({ magazine }: MagazineViewerProps) {
                     .map(bookmark => (
                       <button
                         key={bookmark.timestamp}
-                        onClick={() => setCurrentPage(bookmark.page)}
+                        onClick={() => {
+                          setCurrentPage(bookmark.page);
+                          if (isMobile) setShowMobileMenu(false);
+                        }}
                         className={`w-full text-left p-2 rounded hover:bg-gray-50 ${
                           currentPage === bookmark.page ? 'bg-blue-50' : ''
                         }`}
                       >
-                        <div className="font-medium">{bookmark.title}</div>
-                        <div className="text-sm text-gray-500">
+                        <div className="font-medium text-sm">{bookmark.title}</div>
+                        <div className="text-xs text-gray-500">
                           Page {bookmark.page}
                         </div>
                       </button>
@@ -180,80 +212,109 @@ function MagazineViewer({ magazine }: MagazineViewerProps) {
 
       {/* Main Content */}
       <div className="flex-1 relative overflow-hidden">
-        {/* Top Controls */}
-        <div className="absolute top-4 right-4 z-10 flex gap-2">
-          <div className="bg-white rounded-lg shadow-md flex">
+        {/* Mobile Header */}
+        {isMobile && (
+          <div className="absolute top-0 left-0 right-0 z-20 bg-white border-b border-gray-200 p-2 flex justify-between items-center">
             <button
-              onClick={() => {
-                setShowThumbnails(true);
-                setShowBookmarks(false);
-              }}
-              className={`p-2 hover:bg-gray-100 ${
-                showThumbnails ? 'bg-gray-100' : ''
-              }`}
-              title="Show thumbnails"
+              onClick={() => setShowMobileMenu(true)}
+              className="p-2 hover:bg-gray-100 rounded-lg"
             >
-              <Layout className="w-5 h-5" />
+              <Menu className="w-5 h-5" />
             </button>
-            <button
-              onClick={() => {
-                setShowBookmarks(true);
-                setShowThumbnails(false);
-              }}
-              className={`p-2 hover:bg-gray-100 border-l border-gray-200 ${
-                showBookmarks ? 'bg-gray-100' : ''
-              }`}
-              title="Show bookmarks"
-            >
-              <List className="w-5 h-5" />
-            </button>
+            <div className="text-sm font-medium">
+              Page {currentPage} of {numPages}
+            </div>
             <button
               onClick={toggleBookmark}
-              className={`p-2 hover:bg-gray-100 border-l border-gray-200 ${
+              className={`p-2 hover:bg-gray-100 rounded-lg ${
                 isCurrentPageBookmarked ? 'text-blue-500' : ''
               }`}
-              title="Toggle bookmark"
             >
               <Bookmark className="w-5 h-5" />
             </button>
           </div>
+        )}
 
-          <div className="bg-white rounded-lg shadow-md flex">
-            <button
-              onClick={() => setScale(s => Math.min(s + 0.2, 2))}
-              className="p-2 hover:bg-gray-100 rounded-l-lg"
-              title="Zoom in"
-            >
-              <ZoomIn className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => setScale(s => Math.max(s - 0.2, 0.5))}
-              className="p-2 hover:bg-gray-100 border-l border-gray-200"
-              title="Zoom out"
-            >
-              <ZoomOut className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => setViewMode(mode => (mode === 'single' ? 'double' : 'single'))}
-              className="p-2 hover:bg-gray-100 border-l border-gray-200 rounded-r-lg"
-              title="Toggle view mode"
-            >
-              <Eye className="w-5 h-5" />
-            </button>
+        {/* Desktop Top Controls */}
+        {!isMobile && (
+          <div className="absolute top-4 right-4 z-10 flex flex-col sm:flex-row gap-2">
+            <div className="bg-white rounded-lg shadow-md flex">
+              <button
+                onClick={() => {
+                  setShowThumbnails(true);
+                  setShowBookmarks(false);
+                }}
+                className={`p-2 hover:bg-gray-100 rounded-l-lg ${
+                  showThumbnails ? 'bg-gray-100' : ''
+                }`}
+                title="Show thumbnails"
+              >
+                <Layout className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+              <button
+                onClick={() => {
+                  setShowBookmarks(true);
+                  setShowThumbnails(false);
+                }}
+                className={`p-2 hover:bg-gray-100 border-l border-gray-200 ${
+                  showBookmarks ? 'bg-gray-100' : ''
+                }`}
+                title="Show bookmarks"
+              >
+                <List className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+              <button
+                onClick={toggleBookmark}
+                className={`p-2 hover:bg-gray-100 border-l border-gray-200 rounded-r-lg ${
+                  isCurrentPageBookmarked ? 'text-blue-500' : ''
+                }`}
+                title="Toggle bookmark"
+              >
+                <Bookmark className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-md flex">
+              <button
+                onClick={() => setScale(s => Math.min(s + 0.1, 2))}
+                className="p-2 hover:bg-gray-100 rounded-l-lg"
+                title="Zoom in"
+              >
+                <ZoomIn className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+              <button
+                onClick={() => setScale(s => Math.max(s - 0.1, 0.3))}
+                className="p-2 hover:bg-gray-100 border-l border-gray-200"
+                title="Zoom out"
+              >
+                <ZoomOut className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+              {!isMobile && (
+                <button
+                  onClick={() => setViewMode(mode => (mode === 'single' ? 'double' : 'single'))}
+                  className="p-2 hover:bg-gray-100 border-l border-gray-200 rounded-r-lg"
+                  title="Toggle view mode"
+                >
+                  <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* PDF Viewer */}
-        <div className="h-full flex items-center justify-center overflow-auto">
+        <div className={`h-full flex items-center justify-center overflow-auto ${
+          isMobile ? 'pt-12' : ''
+        }`}>
           {isLoading && (
             <div className="flex items-center gap-2">
               <Loader2 className="w-6 h-6 animate-spin" />
-              <span>Loading magazine...</span>
+              <span className="text-sm sm:text-base">Loading magazine...</span>
             </div>
           )}
           {error ? (
-            <div className="text-center p-8">
-              <p className="text-red-600 mb-4">{error}</p>
+            <div className="text-center p-4 sm:p-8 mx-4">
+              <p className="text-red-600 mb-4 text-sm sm:text-base">{error}</p>
             </div>
           ) : (
             <Document
@@ -263,33 +324,33 @@ function MagazineViewer({ magazine }: MagazineViewerProps) {
               loading={
                 <div className="flex items-center gap-2">
                   <Loader2 className="w-6 h-6 animate-spin" />
-                  <span>Loading page...</span>
+                  <span className="text-sm sm:text-base">Loading page...</span>
                 </div>
               }
             >
-              <div className="flex gap-4">
+              <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-2 sm:gap-4 p-2 sm:p-4`}>
                 <Page
                   pageNumber={currentPage}
                   scale={scale}
                   loading={
                     <div className="flex items-center gap-2">
                       <Loader2 className="w-6 h-6 animate-spin" />
-                      <span>Loading page...</span>
+                      <span className="text-sm sm:text-base">Loading page...</span>
                     </div>
                   }
-                  className="shadow-lg"
+                  className="shadow-lg max-w-full"
                 />
-                {viewMode === 'double' && currentPage < (numPages || 0) && (
+                {viewMode === 'double' && !isMobile && currentPage < (numPages || 0) && (
                   <Page
                     pageNumber={currentPage + 1}
                     scale={scale}
                     loading={
                       <div className="flex items-center gap-2">
                         <Loader2 className="w-6 h-6 animate-spin" />
-                        <span>Loading page...</span>
+                        <span className="text-sm sm:text-base">Loading page...</span>
                       </div>
                     }
-                    className="shadow-lg"
+                    className="shadow-lg max-w-full"
                   />
                 )}
               </div>
@@ -304,22 +365,57 @@ function MagazineViewer({ magazine }: MagazineViewerProps) {
             <button
               onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
               disabled={currentPage <= 1}
-              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 p-4 bg-white shadow-lg rounded-full hover:bg-gray-100 disabled:opacity-50"
+              className={`absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 z-10 p-2 sm:p-3 bg-white shadow-lg rounded-full hover:bg-gray-100 disabled:opacity-50 ${
+                isMobile ? 'mt-6' : ''
+              }`}
               title="Previous Page"
             >
-              <ChevronLeft className="w-6 h-6" />
+              <ChevronLeft className="w-4 h-4 sm:w-6 sm:h-6" />
             </button>
             
             {/* Right button */}
             <button
               onClick={() => setCurrentPage(p => Math.min(p + 1, numPages))}
               disabled={currentPage >= numPages}
-              className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 p-4 bg-white shadow-lg rounded-full hover:bg-gray-100 disabled:opacity-50"
+              className={`absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 z-10 p-2 sm:p-3 bg-white shadow-lg rounded-full hover:bg-gray-100 disabled:opacity-50 ${
+                isMobile ? 'mt-6' : ''
+              }`}
               title="Next Page"
             >
-              <ChevronRight className="w-6 h-6" />
+              <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6" />
             </button>
           </>
+        )}
+
+        {/* Mobile Bottom Controls */}
+        {isMobile && (
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 bg-white rounded-lg shadow-md flex">
+            <button
+              onClick={() => setScale(s => Math.min(s + 0.1, 2))}
+              className="p-3 hover:bg-gray-100 rounded-l-lg"
+              title="Zoom in"
+            >
+              <ZoomIn className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setScale(s => Math.max(s - 0.1, 0.3))}
+              className="p-3 hover:bg-gray-100 border-l border-gray-200"
+              title="Zoom out"
+            >
+              <ZoomOut className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => {
+                setShowThumbnails(true);
+                setShowBookmarks(false);
+                setShowMobileMenu(true);
+              }}
+              className="p-3 hover:bg-gray-100 border-l border-gray-200 rounded-r-lg"
+              title="Show thumbnails"
+            >
+              <Layout className="w-5 h-5" />
+            </button>
+          </div>
         )}
       </div>
     </div>
